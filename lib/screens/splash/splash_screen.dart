@@ -20,7 +20,7 @@ class SplashScreen extends StatelessWidget {
         listener: (context, state) {
           if (state.status == AuthStatus.unauthenticated) {
             Navigator.of(context).pushNamed(LoginScreen.routeName);
-          } else if (state.status == AuthStatus.unauthenticated) {
+          } else if (state.status == AuthStatus.authenticated) {
             Navigator.of(context).pushNamed(NavScreen.routeName);
           }
         },

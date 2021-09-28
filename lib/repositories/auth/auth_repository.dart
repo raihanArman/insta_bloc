@@ -16,11 +16,15 @@ class AuthRepository extends BaseAuthRepository {
         _firebaseAuth = firebaseAuth ?? auth.FirebaseAuth.instance;
 
   @override
-  Future<auth.User> logInWithEmailAndPassword(
-      {required String email, required String password}) async {
+  Future<auth.User> logInWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) async {
     try {
       final credential = await _firebaseAuth.signInWithEmailAndPassword(
-          email: email, password: password);
+        email: email,
+        password: password,
+      );
       return credential.user!;
     } on auth.FirebaseAuthException catch (err) {
       throw Failure(code: err.code, message: err.message!);
