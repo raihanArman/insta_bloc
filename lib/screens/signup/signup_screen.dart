@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:insta_bloc/repositories/auth/auth_repository.dart';
 import 'package:insta_bloc/screens/signup/cubit/signup_cubit.dart';
+import 'package:insta_bloc/screens/widgets/widgets.dart';
 
 import '../screens.dart';
 
@@ -29,9 +30,8 @@ class SignupScreen extends StatelessWidget {
             if (state.status == SignupStatus.error) {
               showDialog(
                   context: context,
-                  builder: (context) => AlertDialog(
-                        title: Text('error'),
-                        content: Text(state.failure.message),
+                  builder: (context) => ErrorDialog(
+                        message: state.failure.message,
                       ));
             } else if (state.status == SignupStatus.success) {
               Navigator.of(context).pushNamed(NavScreen.routeName);
