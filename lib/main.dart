@@ -7,6 +7,7 @@ import 'package:insta_bloc/blocs/blocs.dart';
 import 'package:insta_bloc/blocs/simple_bloc_observer.dart';
 import 'package:insta_bloc/config/custom_router.dart';
 import 'package:insta_bloc/repositories/auth/auth_repository.dart';
+import 'package:insta_bloc/repositories/repositories.dart';
 import 'package:insta_bloc/screens/splash/splash_screen.dart';
 
 void main() async {
@@ -25,6 +26,9 @@ class MyApp extends StatelessWidget {
       providers: [
         RepositoryProvider<AuthRepository>(
           create: (_) => AuthRepository(),
+        ),
+        RepositoryProvider<UserRepository>(
+          create: (_) => UserRepository(),
         )
       ],
       child: MultiBlocProvider(
