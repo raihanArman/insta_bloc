@@ -17,7 +17,7 @@ class UserRepository extends BaseUserRepository {
   }
 
   @override
-  Future<void> updateUser(User user) async {
+  Future<void> updateUser({required User user}) async {
     await _firebaseFirestore
         .collection(Paths.users)
         .doc(user.id)

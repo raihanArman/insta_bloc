@@ -37,13 +37,18 @@ class EditProfileCubit extends Cubit<EditProfileState> {
   }
 
   void bioChanged(String bio) {
-    emit(state.copyWith(bio: bio, status: EditProfileStatus.initial));
+    print(bio);
+    emit(
+      state.copyWith(bio: bio, status: EditProfileStatus.initial),
+    );
   }
 
   void submit() async {
     emit(state.copyWith(status: EditProfileStatus.submitting));
     try {
       final user = _profileBloc.state.user;
+
+      print("Mantap jiwa");
 
       var profileImageUrl = user.profileImageUrl;
       if (state.profileImage != null) {
@@ -52,11 +57,14 @@ class EditProfileCubit extends Cubit<EditProfileState> {
       }
 
       final updateUser = user.copyWith(
-          username: user.username,
-          bio: user.bio,
-          profileImageUrl: profileImageUrl);
+        username: state.username,
+        bio: state.bio,
+        profileImageUrl: profileImageUrl,
+      );
 
-      await _userRepository.updateUser(updateUser);
+      print("Amino ${updateUser.bio}");
+
+      await _userRepository.updateUser(user: updateUser);
       _profileBloc.add(ProfileLoadUser(userId: user.id));
 
       emit(state.copyWith(status: EditProfileStatus.success));

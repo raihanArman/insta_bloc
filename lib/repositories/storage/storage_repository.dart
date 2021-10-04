@@ -8,7 +8,7 @@ class StorageRepository implements BaseStorageRepository {
   final FirebaseStorage _firebaseStorage;
 
   StorageRepository({FirebaseStorage? firebaseStorage})
-      : _firebaseStorage = firebaseStorage!;
+      : _firebaseStorage = firebaseStorage ?? FirebaseStorage.instance;
 
   _uploadImage({required File image, required String ref}) async {
     final downloadUrl = await _firebaseStorage
