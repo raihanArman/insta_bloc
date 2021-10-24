@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:insta_bloc/blocs/auth/auth_bloc.dart';
 import 'package:insta_bloc/models/models.dart';
+import 'package:insta_bloc/repositories/repositories.dart';
 import 'package:insta_bloc/repositories/user/user_repository.dart';
 
 part 'profile_event.dart';
@@ -9,17 +12,38 @@ part 'profile_state.dart';
 
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   final UserRepository _userRepository;
+  final PostRepository _postRepository;
   final AuthBloc _authBloc;
+
+  StreamSubscription<List<Future<Post?>>>? _postsSubcription;
+
   ProfileBloc(
-      {required UserRepository userRepository, required AuthBloc authBloc})
+      {required UserRepository userRepository,
+      required PostRepository postRepository,
+      required AuthBloc authBloc})
       : _userRepository = userRepository,
+        _postRepository = postRepository,
         _authBloc = authBloc,
         super(ProfileState.initial());
+
+  @override
+  Future<void> close() {
+    _postsSubcription!.cancel();
+    return super.close();
+  }
 
   @override
   Stream<ProfileState> mapEventToState(ProfileEvent event) async* {
     if (event is ProfileLoadUser) {
       yield* _mapProfileLoadUserToState(event);
+    } else if (event is ProfileToggleGridView) {
+      yield* _mapProfileToggleGridViewToState(event);
+    } else if (event is ProfileUpdatePosts) {
+      yield* _mapProfileUpdatePostsToState(event);
+    } else if (event is ProfileFollowUser) {
+      yield* _mapProfileFollowUserToState();
+    } else if (event is ProfileUnfollowUser) {
+      yield* _mapProfileUnfollowUserToState();
     }
   }
 
@@ -30,14 +54,65 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     try {
       final user = await _userRepository.getUserWithId(userId: event.userId);
       final isCurrentUser = _authBloc.state.user!.uid == event.userId;
+
+      final isFollowing = await _userRepository.isFolowing(
+          userId: _authBloc.state.user!.uid, otherUserId: event.userId);
+
+      _postsSubcription?.cancel();
+      _postsSubcription = _postRepository
+          .getUserPosts(user: event.userId)
+          .listen((posts) async {
+        final allPosts = await Future.wait(posts);
+        add(ProfileUpdatePosts(posts: allPosts));
+      });
+
       yield state.copyWith(
           user: user,
           isCurrentUser: isCurrentUser,
+          isFollowing: isFollowing,
           status: ProfileStatus.loaded);
     } catch (err) {
       yield state.copyWith(
           status: ProfileStatus.error,
           failure: Failure(message: 'We were to load this profile'));
+    }
+  }
+
+  Stream<ProfileState> _mapProfileToggleGridViewToState(
+      ProfileToggleGridView event) async* {
+    yield state.copyWith(isGridView: event.isGridView);
+  }
+
+  Stream<ProfileState> _mapProfileUpdatePostsToState(
+      ProfileUpdatePosts event) async* {
+    yield state.copyWith(posts: event.posts);
+  }
+
+  Stream<ProfileState> _mapProfileFollowUserToState() async* {
+    try {
+      _userRepository.followUser(
+          userId: _authBloc.state.user!.uid, followUserId: state.user.id);
+      final updateUser =
+          state.user.copyWith(followers: state.user.followers + 1);
+      yield state.copyWith(user: updateUser, isFollowing: true);
+    } catch (err) {
+      yield state.copyWith(
+          status: ProfileStatus.error,
+          failure: Failure(message: 'Something went wrong'));
+    }
+  }
+
+  Stream<ProfileState> _mapProfileUnfollowUserToState() async* {
+    try {
+      _userRepository.unfollowUser(
+          userId: _authBloc.state.user!.uid, unfollowUserId: state.user.id);
+      final updateUser =
+          state.user.copyWith(followers: state.user.followers - 1);
+      yield state.copyWith(user: updateUser, isFollowing: false);
+    } catch (err) {
+      yield state.copyWith(
+          status: ProfileStatus.error,
+          failure: Failure(message: 'Something went wrong'));
     }
   }
 }
